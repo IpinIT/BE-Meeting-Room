@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  user
+}
+
+enum BookingStatus {
+  active
+  cancelled
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String
+  division  String
+  password  String
+  role      Role     @default(user)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@map("users")
+}
+
+model Room {
+  id             String   @id @default(uuid())
+  name           String
+  description    String
+  capacity       Int
+  sizeSqft       Int      @map("size_sqft")
+  facilities     String[]
+  imageUrl       String   @map("image_url")
+  availableStart String   @default("08:00") @map("available_start")
+  availableEnd   String   @default("18:00") @map("available_end")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@map("rooms")
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  roomId    String        @map("room_id")
+  userId    String        @map("user_id")
+  checkIn   DateTime      @map("check_in") @db.Timestamptz()
+  checkOut  DateTime      @map("check_out") @db.Timestamptz()
+  status    BookingStatus @default(active)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
