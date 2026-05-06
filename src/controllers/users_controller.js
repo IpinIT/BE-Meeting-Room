@@ -3,28 +3,28 @@ const { z } = require('zod')
 const prisma = require('../config/prisma')
 
 const createUserSchema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
-  email: z.string().email('Format email tidak valid'),
-  phone: z.string().min(1, 'Nomor telepon wajib diisi'),
-  division: z.string().min(1, 'Divisi wajib diisi'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email format'),
+  phone: z.string().min(1, 'Phone number is required'),
+  division: z.string().min(1, 'Division is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.enum(['admin', 'user']).optional().default('user'),
 })
 
 const updateUserSchema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
-  email: z.string().email('Format email tidak valid'),
-  phone: z.string().min(1, 'Nomor telepon wajib diisi'),
-  division: z.string().min(1, 'Divisi wajib diisi'),
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email format'),
+  phone: z.string().min(1, 'Phone number is required'),
+  division: z.string().min(1, 'Division is required'),
   role: z.enum(['admin', 'user']).optional(),
-  password: z.string().min(6, 'Password minimal 6 karakter').optional().or(z.literal('')),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
 })
 
 const updateProfileSchema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
-  phone: z.string().min(1, 'Nomor telepon wajib diisi'),
-  division: z.string().min(1, 'Divisi wajib diisi'),
-  password: z.string().min(6, 'Password minimal 6 karakter').optional().or(z.literal('')),
+  name: z.string().min(1, 'Name is required'),
+  phone: z.string().min(1, 'Phone number is required'),
+  division: z.string().min(1, 'Division is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
   confirmPassword: z.string().optional(),
 })
 
@@ -37,7 +37,7 @@ const getAllUsers = async (req, res) => {
     return res.status(200).json({ users })
   } catch (error) {
     console.error('Get all users error:', error)
-    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+    return res.status(500).json({ message: 'Internal server error.' })
   }
 }
 
@@ -48,10 +48,10 @@ const getUserById = async (req, res) => {
       where: { id },
       select: { id: true, name: true, email: true, phone: true, division: true, role: true, createdAt: true },
     })
-    if (!user) return res.status(404).json({ message: 'User tidak ditemukan.' })
+    if (!user) return res.status(404).json({ message: 'User not found.' })
     return res.status(200).json({ user })
   } catch (error) {
-    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+    return res.status(500).json({ message: 'Internal server error.' })
   }
 }
 
@@ -66,7 +66,7 @@ const createUser = async (req, res) => {
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
-      return res.status(409).json({ message: 'Email sudah terdaftar, silakan coba email lain.' })
+      return res.status(409).json({ message: 'Email is already registered, please try another email.' })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -75,10 +75,10 @@ const createUser = async (req, res) => {
       select: { id: true, name: true, email: true, phone: true, division: true, role: true },
     })
 
-    return res.status(201).json({ message: 'User berhasil ditambahkan.', user })
+    return res.status(201).json({ message: 'User successfully added.', user })
   } catch (error) {
     console.error('Create user error:', error)
-    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+    return res.status(500).json({ message: 'Internal server error.' })
   }
 }
 
@@ -87,7 +87,7 @@ const updateUser = async (req, res) => {
     const { id } = req.params
 
     const existing = await prisma.user.findUnique({ where: { id } })
-    if (!existing) return res.status(404).json({ message: 'User tidak ditemukan.' })
+    if (!existing) return res.status(404).json({ message: 'User not found.' })
 
     const result = updateUserSchema.safeParse(req.body)
     if (!result.success) {
@@ -96,10 +96,10 @@ const updateUser = async (req, res) => {
 
     const { name, email, phone, division, role, password } = result.data
 
-    // Cek email duplikat jika email berubah
+    // Check duplicate email if email changes
     if (email !== existing.email) {
       const emailExists = await prisma.user.findUnique({ where: { email } })
-      if (emailExists) return res.status(409).json({ message: 'Email sudah dipakai user lain.' })
+      if (emailExists) return res.status(409).json({ message: 'Email has been used by another user.' })
     }
 
     const updateData = { name, email, phone, division, role }
@@ -113,10 +113,10 @@ const updateUser = async (req, res) => {
       select: { id: true, name: true, email: true, phone: true, division: true, role: true },
     })
 
-    return res.status(200).json({ message: 'User berhasil diperbarui.', user })
+    return res.status(200).json({ message: 'User successfully updated.', user })
   } catch (error) {
     console.error('Update user error:', error)
-    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+    return res.status(500).json({ message: 'Internal server error.' })
   }
 }
 
@@ -126,17 +126,17 @@ const deleteUser = async (req, res) => {
 
     // Prevent self-delete
     if (id === req.user.id) {
-      return res.status(400).json({ message: 'Tidak bisa menghapus akun sendiri.' })
+      return res.status(400).json({ message: 'Can\'t delete own account.' })
     }
 
     const existing = await prisma.user.findUnique({ where: { id } })
-    if (!existing) return res.status(404).json({ message: 'User tidak ditemukan.' })
+    if (!existing) return res.status(404).json({ message: 'User not found.' })
 
     await prisma.user.delete({ where: { id } })
-    return res.status(200).json({ message: 'User berhasil dihapus.' })
+    return res.status(200).json({ message: 'User successfully deleted.' })
   } catch (error) {
     console.error('Delete user error:', error)
-    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+    return res.status(500).json({ message: 'Internal server error.' })
   }
 }
 
@@ -150,7 +150,7 @@ const updateProfile = async (req, res) => {
     const { name, phone, division, password, confirmPassword } = result.data
 
     if (password && password.length > 0 && password !== confirmPassword) {
-      return res.status(400).json({ message: 'Konfirmasi password tidak cocok.' })
+      return res.status(400).json({ message: 'Confirm password does not match.' })
     }
 
     const updateData = { name, phone, division }
@@ -164,10 +164,10 @@ const updateProfile = async (req, res) => {
       select: { id: true, name: true, email: true, phone: true, division: true, role: true },
     })
 
-    return res.status(200).json({ message: 'Profil berhasil diperbarui.', user })
+    return res.status(200).json({ message: 'Profile updated successfully.', user })
   } catch (error) {
     console.error('Update profile error:', error)
-    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+    return res.status(500).json({ message: 'Internal server error.' })
   }
 }
 

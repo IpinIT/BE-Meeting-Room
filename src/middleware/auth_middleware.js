@@ -6,7 +6,7 @@ const authenticate = async (req, res, next) => {
     const token = req.cookies?.accessToken
 
     if (!token) {
-      return res.status(401).json({ message: 'Akses ditolak. Silakan login terlebih dahulu.' })
+      return res.status(401).json({ message: 'Access denied. Please log in first..' })
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
@@ -16,22 +16,22 @@ const authenticate = async (req, res, next) => {
     })
 
     if (!user) {
-      return res.status(401).json({ message: 'User tidak ditemukan.' })
+      return res.status(401).json({ message: 'User not found.' })
     }
 
     req.user = user
     next()
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Sesi habis. Silakan login kembali.', code: 'TOKEN_EXPIRED' })
+      return res.status(401).json({ message: 'Session expired. Please log in again.', code: 'TOKEN_EXPIRED' })
     }
-    return res.status(401).json({ message: 'Token tidak valid.' })
+    return res.status(401).json({ message: 'Invalid token.' })
   }
 }
 
 const adminOnly = (req, res, next) => {
   if (req.user?.role !== 'admin') {
-    return res.status(403).json({ message: 'Akses ditolak. Hanya admin yang diizinkan.' })
+    return res.status(403).json({ message: 'Access denied. Only admins are allowed.' })
   }
   next()
 }

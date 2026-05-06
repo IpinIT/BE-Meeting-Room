@@ -22,12 +22,12 @@ app.use('/api', routes)
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
 
 // 404 handler
-app.use((req, res) => res.status(404).json({ message: 'Endpoint tidak ditemukan.' }))
+app.use((req, res) => res.status(404).json({ message: 'Endpoint not found.' }))
 
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err)
-  res.status(500).json({ message: 'Terjadi kesalahan server.' })
+  res.status(500).json({ message: 'Internal server error.' })
 })
 
 const PORT = process.env.PORT || 5000
