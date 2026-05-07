@@ -28,29 +28,27 @@ const getRoomById = async (req, res) => {
   try {
     const { id } = req.params
 
-    const room = await prisma.room.findUnique({
-      where: { id },
-    })
+    // Jalankan parallel, bukan sequential
+    const [room, bookings] = await Promise.all([
+      prisma.room.findUnique({ where: { id } }),
+      prisma.booking.findMany({
+        where: {
+          roomId: id,
+          status: 'active',
+          checkIn: { gte: new Date() },
+        },
+        select: {
+          id: true,
+          checkIn: true,
+          checkOut: true,
+          user: { select: { name: true, division: true } },
+        },
+        orderBy: { checkIn: 'asc' },
+        take: 50, // Batasi maksimal 50 booking yang ditampilkan
+      }),
+    ])
 
     if (!room) return res.status(404).json({ message: 'Room not found.' })
-
-    // Get today's active bookings for this room to show who booked and when
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    const bookings = await prisma.booking.findMany({
-      where: {
-        roomId: id,
-        status: 'active',
-        checkIn: { gte: today },
-      },
-      include: {
-        user: { select: { name: true, division: true } },
-      },
-      orderBy: { checkIn: 'asc' },
-    })
 
     return res.status(200).json({ room, bookings })
   } catch (error) {
