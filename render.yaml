@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: meeting-room-booking-api
+    runtime: node
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
